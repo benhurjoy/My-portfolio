@@ -619,6 +619,28 @@
             box-shadow: 0 5px 15px rgba(108, 99, 255, 0.4);
         }
         
+        .form-message {
+            margin-top: 1rem;
+            padding: 0.8rem;
+            border-radius: 5px;
+            text-align: center;
+            display: none;
+        }
+        
+        .form-message.success {
+            background: rgba(54, 215, 183, 0.2);
+            border: 1px solid var(--success);
+            color: var(--success);
+            display: block;
+        }
+        
+        .form-message.error {
+            background: rgba(255, 101, 132, 0.2);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            display: block;
+        }
+        
         /* Footer */
         footer {
             background: rgba(5, 5, 16, 0.9);
@@ -1048,20 +1070,21 @@
                 </div>
             </div>
             <div class="contact-form">
-                <form id="contactForm">
+                <form id="contactForm" action="https://formspree.io/f/xovyaplp" method="POST">
                     <div class="form-group">
-                        <input type="text" class="form-control" placeholder="Your Name" required>
+                        <input type="text" name="name" class="form-control" placeholder="Your Name" required>
                     </div>
                     <div class="form-group">
-                        <input type="email" class="form-control" placeholder="Your Email" required>
+                        <input type="email" name="email" class="form-control" placeholder="Your Email" required>
                     </div>
                     <div class="form-group">
-                        <input type="text" class="form-control" placeholder="Subject" required>
+                        <input type="text" name="subject" class="form-control" placeholder="Subject" required>
                     </div>
                     <div class="form-group">
-                        <textarea class="form-control" placeholder="Your Message" required></textarea>
+                        <textarea name="message" class="form-control" placeholder="Your Message" required></textarea>
                     </div>
                     <button type="submit" class="submit-btn"><i class="fas fa-paper-plane"></i> Send Message</button>
+                    <div id="formMessage" class="form-message"></div>
                 </form>
             </div>
         </div>
@@ -1165,8 +1188,50 @@
         // Form submission handling
         document.getElementById('contactForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            alert('Thank you for your message! I will get back to you soon.');
-            this.reset();
+            
+            const form = this;
+            const formMessage = document.getElementById('formMessage');
+            const submitBtn = form.querySelector('.submit-btn');
+            const originalBtnText = submitBtn.innerHTML;
+            
+            // Show loading state
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            submitBtn.disabled = true;
+            
+            // Get form data
+            const formData = new FormData(form);
+            
+            // Send form data using fetch
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    formMessage.textContent = 'Thank you for your message! I will get back to you soon.';
+                    formMessage.className = 'form-message success';
+                    form.reset();
+                } else {
+                    throw new Error('Form submission failed');
+                }
+            })
+            .catch(error => {
+                formMessage.textContent = 'Sorry, there was an error sending your message. Please try again or email me directly.';
+                formMessage.className = 'form-message error';
+            })
+            .finally(() => {
+                // Reset button state
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
+                
+                // Hide message after 5 seconds
+                setTimeout(() => {
+                    formMessage.style.display = 'none';
+                }, 5000);
+            });
         });
         
         // Particle background
